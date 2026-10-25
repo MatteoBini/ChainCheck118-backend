@@ -1,0 +1,50 @@
+name: chaincheck118
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chaincheck118-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chaincheck}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chaincheck}
+      POSTGRES_DB: ${POSTGRES_DB:-chaincheck118}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chaincheck} -d ${POSTGRES_DB:-chaincheck118}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: chaincheck118-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-chaincheck}:${POSTGRES_PASSWORD:-chaincheck}@postgres:5432/${POSTGRES_DB:-chaincheck118}?schema=public
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - node_modules:/app/node_modules
+
+volumes:
+  postgres_data:
+  node_modules:

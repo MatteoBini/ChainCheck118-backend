@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+.git
+.github
+.husky
+.vscode
+.history
+contracts
+tests
+docs
+src/logs
+.env
+.env.dev
+*.log
+info.txt

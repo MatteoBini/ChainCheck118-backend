@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { prisma } from "./db/prisma.js";
 import { logger } from "./config/logger.js";
+import { authRoutes } from "./modules/auth/auth.routes.js";
 
 export const routes = Router();
 
@@ -14,3 +15,5 @@ routes.get("/health", async (_req, res) => {
     res.status(503).json({ status: "degraded", db: "down" });
   }
 });
+
+routes.use("/auth", authRoutes);

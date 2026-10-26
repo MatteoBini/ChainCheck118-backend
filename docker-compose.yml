@@ -35,6 +35,9 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "500"
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-non-usare-in-produzione-32+}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      SEED_PASSWORD: ${SEED_PASSWORD:-password123}
       DATABASE_URL: postgresql://${POSTGRES_USER:-chaincheck}:${POSTGRES_PASSWORD:-chaincheck}@postgres:5432/${POSTGRES_DB:-chaincheck118}?schema=public
     ports:
       - "${PORT:-3000}:3000"

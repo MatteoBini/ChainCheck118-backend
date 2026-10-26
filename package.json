@@ -16,7 +16,8 @@
     "prisma:studio": "prisma studio",
     "seed": "tsx --env-file-if-exists=.env prisma/seed.ts",
     "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "tsx --test tests/unit/*.test.ts"
   },
   "prisma": {
     "seed": "tsx --env-file-if-exists=.env prisma/seed.ts"
@@ -24,6 +25,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "express": "^4.21.2",
+    "jose": "^6.2.13",
     "pino": "^9.6.0",
     "pino-http": "^10.4.0",
     "zod": "^4.6.7"

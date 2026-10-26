@@ -1,5 +1,7 @@
 import { PrismaClient, Role } from "@prisma/client";
 
+import { hashPassword } from "../src/modules/auth/password.js";
+
 const prisma = new PrismaClient();
 
 const CHECKLIST_ITEMS = [
@@ -25,6 +27,8 @@ const CHECKLIST_ITEMS = [
   "Contenitore taglienti e kit protezione individuale",
 ];
 
+const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "password123";
+
 const USERS = [
   { username: "operatore", fullName: "Marco Rossi", role: Role.OPERATORE },
   { username: "soccorritore", fullName: "Giulia Bianchi", role: Role.SOCCORRITORE },
@@ -46,10 +50,11 @@ async function seedChecklistItems() {
 
 async function seedUsers() {
   for (const user of USERS) {
+    const passwordHash = await hashPassword(SEED_PASSWORD);
     await prisma.appUser.upsert({
       where: { username: user.username },
-      update: { fullName: user.fullName, role: user.role },
-      create: user,
+      update: { fullName: user.fullName, role: user.role, passwordHash },
+      create: { ...user, passwordHash },
     });
   }
   return USERS.length;
@@ -71,6 +76,7 @@ async function main() {
   const users = await seedUsers();
   const vehicles = await seedVehicles();
   console.log(`seed completato: ${items} checklist item, ${users} utenti, ${vehicles} mezzi`);
+  console.log(`password utenti: ${SEED_PASSWORD}`);
 }
 
 main()

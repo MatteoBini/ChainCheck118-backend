@@ -18,10 +18,10 @@ export const itemResultsSchema = z
 
 export type ItemResult = z.infer<typeof itemResultsSchema>[number];
 
-export async function findVehicleByCode(code: string) {
-  const vehicle = await prisma.vehicle.findUnique({ where: { plate: code.trim().toUpperCase() } });
+export async function findVehicleByPlate(plate: string) {
+  const vehicle = await prisma.vehicle.findUnique({ where: { plate: plate.trim().toUpperCase() } });
   if (!vehicle) {
-    throw new AppError(404, "VEHICLE_NOT_FOUND", `Mezzo ${code} non trovato`);
+    throw new AppError(404, "VEHICLE_NOT_FOUND", `Mezzo con targa ${plate} non trovato`);
   }
   return vehicle;
 }
@@ -51,6 +51,30 @@ export async function assertCompleteResults(results: ItemResult[], field: string
   }
 
   return [...results].sort((a, b) => a.itemId - b.itemId);
+}
+
+/**
+ * La checklist si certifica solo se tutte le voci sono presenti: altrimenti
+ * viene rifiutata (e non salvata) con l'elenco delle voci da sistemare.
+ */
+export async function assertAllPresent(results: ItemResult[]): Promise<void> {
+  const notPresent = results.filter((result) => result.outcome !== "PRESENTE");
+  if (notPresent.length === 0) {
+    return;
+  }
+
+  const descriptions = new Map(
+    (
+      await prisma.checklistItem.findMany({
+        where: { id: { in: notPresent.map((result) => result.itemId) } },
+      })
+    ).map((item) => [item.id, item.description]),
+  );
+
+  const count = notPresent.length === 1 ? "1 voce non risulta presente" : `${notPresent.length} voci non risultano presenti`;
+  throw new AppError(422, "CHECKLIST_NOT_COMPLIANT", `Checklist non certificabile: ${count}`, {
+    items: notPresent.map((result) => ({ ...result, description: descriptions.get(result.itemId) })),
+  });
 }
 
 function startOfToday(): Date {

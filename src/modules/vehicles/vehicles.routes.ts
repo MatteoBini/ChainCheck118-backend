@@ -2,20 +2,20 @@ import { Router, type Request } from "express";
 
 import { authenticate } from "../../common/middlewares/authenticate.js";
 import { prisma } from "../../db/prisma.js";
-import { findTodaySubmission, findVehicleByCode } from "../checklists/checklists.service.js";
+import { findTodaySubmission, findVehicleByPlate } from "../checklists/checklists.service.js";
 
 export const vehicleRoutes = Router();
 
-vehicleRoutes.get("/:code", authenticate, async (req: Request<{ code: string }>, res, next) => {
+vehicleRoutes.get("/:plate", authenticate, async (req: Request<{ plate: string }>, res, next) => {
   try {
-    const vehicle = await findVehicleByCode(req.params.code);
+    const vehicle = await findVehicleByPlate(req.params.plate);
     const [items, today] = await Promise.all([
       prisma.checklistItem.findMany({ orderBy: { id: "asc" } }),
       findTodaySubmission(vehicle.id),
     ]);
 
     res.json({
-      vehicle: { id: vehicle.id, code: vehicle.plate },
+      vehicle: { id: vehicle.id, plate: vehicle.plate },
       items: items.map((item) => ({ id: item.id, description: item.description })),
       today: today
         ? {

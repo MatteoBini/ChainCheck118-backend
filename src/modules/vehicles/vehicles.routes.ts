@@ -1,10 +1,55 @@
 import { Router, type Request } from "express";
 
 import { authenticate } from "../../common/middlewares/authenticate.js";
+import { authorize } from "../../common/middlewares/authorize.js";
 import { prisma } from "../../db/prisma.js";
 import { findTodaySubmission, findVehicleByPlate } from "../checklists/checklists.service.js";
 
 export const vehicleRoutes = Router();
+
+/**
+ * Panoramica per la centrale: tutti i mezzi (ordinati per targa) con
+ * l'ultima checklist certificata, chi l'ha fatta e l'eventuale ispezione.
+ */
+vehicleRoutes.get("/", authenticate, authorize("OPERATORE"), async (_req, res, next) => {
+  try {
+    const vehicles = await prisma.vehicle.findMany({
+      orderBy: { plate: "asc" },
+      include: {
+        submissions: {
+          orderBy: [{ confirmedAt: "desc" }, { id: "desc" }],
+          take: 1,
+          include: {
+            user: { select: { id: true, username: true, fullName: true } },
+            inspection: true,
+          },
+        },
+      },
+    });
+
+    res.json({
+      items: vehicles.map((vehicle) => {
+        const last = vehicle.submissions[0];
+        return {
+          id: vehicle.id,
+          plate: vehicle.plate,
+          lastChecklist: last
+            ? {
+                submissionId: last.id,
+                certifiedAt: last.confirmedAt,
+                by: last.user,
+                inspection: last.inspection
+                  ? { verdict: last.inspection.isCorrect ? "CONFORME" : "NON_CONFORME" }
+                  : null,
+              }
+            : null,
+        };
+      }),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 vehicleRoutes.get("/:plate", authenticate, async (req: Request<{ plate: string }>, res, next) => {
   try {

@@ -6,7 +6,7 @@ export interface Discrepancy {
   observed: ItemOutcome;
 }
 
-/** Entrambe le liste sono già complete e ordinate da assertCompleteResults. */
+/** Presuppone liste già validate da assertCompleteResults (stesse voci). */
 export function compareResults(declared: ItemResult[], observed: ItemResult[]): Discrepancy[] {
   const declaredById = new Map(declared.map((result) => [result.itemId, result.outcome]));
 

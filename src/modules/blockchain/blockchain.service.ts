@@ -10,11 +10,7 @@ export interface ChainRecord {
   timestamp: Date;
 }
 
-/**
- * Scrive l'hash di un record sulla blockchain.
- * Segnaposto: il contratto non è ancora disponibile, quindi recordId e txHash
- * sono simulati. La firma resta la stessa quando arriverà contract.provider.ts.
- */
+/** Segnaposto: recordId e txHash sono simulati finché il contratto non è disponibile. */
 export async function writeRecord(type: RecordType, hash: string, linkedHash?: string): Promise<ChainRecord> {
   const record: ChainRecord = {
     recordId: `0x${randomBytes(16).toString("hex")}`,

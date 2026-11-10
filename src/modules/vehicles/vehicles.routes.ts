@@ -7,10 +7,6 @@ import { findTodaySubmission, findVehicleByPlate } from "../checklists/checklist
 
 export const vehicleRoutes = Router();
 
-/**
- * Panoramica per la centrale: tutti i mezzi (ordinati per targa) con
- * l'ultima checklist certificata, chi l'ha fatta e l'eventuale ispezione.
- */
 vehicleRoutes.get("/", authenticate, authorize("OPERATORE"), async (_req, res, next) => {
   try {
     const vehicles = await prisma.vehicle.findMany({

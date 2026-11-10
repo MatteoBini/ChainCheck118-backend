@@ -26,10 +26,7 @@ export async function findVehicleByPlate(plate: string) {
   return vehicle;
 }
 
-/**
- * Controlla che ci sia esattamente un esito per ogni voce della checklist
- * e restituisce gli esiti ordinati per itemId (forma stabile per l'hash).
- */
+/** Esige un esito per ogni voce; li restituisce ordinati per itemId così l'hash è stabile. */
 export async function assertCompleteResults(results: ItemResult[], field: string): Promise<ItemResult[]> {
   const items = await prisma.checklistItem.findMany({ select: { id: true } });
   const expected = new Set(items.map((item) => item.id));
@@ -53,10 +50,6 @@ export async function assertCompleteResults(results: ItemResult[], field: string
   return [...results].sort((a, b) => a.itemId - b.itemId);
 }
 
-/**
- * La checklist si certifica solo se tutte le voci sono presenti: altrimenti
- * viene rifiutata (e non salvata) con l'elenco delle voci da sistemare.
- */
 export async function assertAllPresent(results: ItemResult[]): Promise<void> {
   const notPresent = results.filter((result) => result.outcome !== "PRESENTE");
   if (notPresent.length === 0) {
@@ -83,7 +76,6 @@ function startOfToday(): Date {
   return today;
 }
 
-/** Ultima checklist certificata oggi per il mezzo, con l'eventuale ispezione. */
 export function findTodaySubmission(vehicleId: number) {
   return prisma.checklistSubmission.findFirst({
     where: { vehicleId, confirmedAt: { gte: startOfToday() } },

@@ -16,7 +16,7 @@ import {
 
 const historyQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(30),
-  /** id dell'ultima checklist della pagina precedente: restituisce quelle più vecchie. */
+  /** id dell'ultima voce della pagina precedente. */
   cursor: z.coerce.number().int().positive().optional(),
   plate: z.string().trim().min(1).optional(),
 });
@@ -28,10 +28,6 @@ const submitSchema = z.object({
 
 export const checklistRoutes = Router();
 
-/**
- * Storico e audit (centrale): tutte le checklist certificate di tutti i mezzi,
- * dalla più recente, con l'autore e l'eventuale ispezione. Paginazione a cursore.
- */
 checklistRoutes.get("/", authenticate, authorize("OPERATORE"), async (req, res, next) => {
   try {
     const parsed = historyQuerySchema.safeParse(req.query);

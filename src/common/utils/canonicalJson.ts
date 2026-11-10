@@ -1,7 +1,4 @@
-/**
- * JSON con chiavi ordinate e senza spazi: lo stesso oggetto produce sempre
- * la stessa stringa, quindi lo stesso hash.
- */
+/** Chiavi ordinate: lo stesso oggetto produce sempre la stessa stringa (e lo stesso hash). */
 export function canonicalJson(value: unknown): string {
   return JSON.stringify(sortKeys(value));
 }

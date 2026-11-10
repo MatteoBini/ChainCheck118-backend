@@ -3,7 +3,7 @@ import type { Role } from "@prisma/client";
 
 import { AppError } from "../errors/AppError.js";
 
-/** Da usare dopo authenticate: consente l'accesso solo ai ruoli indicati. */
+/** Da usare dopo authenticate. */
 export function authorize(...roles: Role[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {

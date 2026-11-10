@@ -9,12 +9,6 @@ const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(5),
 });
 
-/**
- * Voce della lista "Recenti":
- * - SOCCORRITORE: le proprie checklist certificate (con l'eventuale esito dell'ispezione);
- * - ISPETTORE: le proprie ispezioni;
- * - OPERATORE: le ultime checklist certificate di tutti i mezzi.
- */
 type RecentEntry =
   | {
       id: string;

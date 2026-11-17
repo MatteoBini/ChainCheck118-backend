@@ -13,6 +13,7 @@ import {
   findTodaySubmission,
   findVehicleByPlate,
   itemResultsSchema,
+  startOfToday,
 } from "../checklists/checklists.service.js";
 import { compareResults } from "./inspections.service.js";
 
@@ -21,9 +22,42 @@ const inspectionSchema = z.object({
   // Gli esiti per voce non sono salvati sul DB: il client invia quelli della checklist certificata.
   declared: itemResultsSchema,
   observed: itemResultsSchema,
+  note: z.string().trim().max(500).optional(),
 });
 
 export const inspectionRoutes = Router();
+
+inspectionRoutes.get("/pending", authenticate, authorize("ISPETTORE"), async (_req, res, next) => {
+  try {
+    const submissions = await prisma.checklistSubmission.findMany({
+      where: { confirmedAt: { gte: startOfToday() } },
+      orderBy: [{ confirmedAt: "desc" }, { id: "desc" }],
+      include: { vehicle: true, user: { select: { id: true, username: true, fullName: true } }, inspection: true },
+    });
+
+    // Un mezzo può essere ricertificato più volte nello stesso giorno: conta solo l'ultima
+    // submission (quella su cui POST /inspections agisce davvero, vedi findTodaySubmission).
+    const latestByVehicle = new Map<number, (typeof submissions)[number]>();
+    for (const submission of submissions) {
+      if (!latestByVehicle.has(submission.vehicleId)) {
+        latestByVehicle.set(submission.vehicleId, submission);
+      }
+    }
+
+    const pending = [...latestByVehicle.values()].filter((submission) => submission.inspection === null);
+
+    res.json({
+      items: pending.map((submission) => ({
+        submissionId: submission.id,
+        plate: submission.vehicle.plate,
+        certifiedAt: submission.confirmedAt,
+        by: submission.user,
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 inspectionRoutes.post("/", authenticate, authorize("ISPETTORE"), async (req, res, next) => {
   try {
@@ -47,6 +81,8 @@ inspectionRoutes.post("/", authenticate, authorize("ISPETTORE"), async (req, res
     const isCorrect = discrepancies.length === 0;
     const inspectedAt = new Date();
 
+    const note = parsed.data.note ?? null;
+
     const hash = hashRecord({
       type: "INSPECTION",
       plate: vehicle.plate,
@@ -55,6 +91,7 @@ inspectionRoutes.post("/", authenticate, authorize("ISPETTORE"), async (req, res
       inspectedAt,
       observed,
       isCorrect,
+      note,
     });
     const chain = await writeRecord("INSPECTION", hash);
 
@@ -68,6 +105,10 @@ inspectionRoutes.post("/", authenticate, authorize("ISPETTORE"), async (req, res
         }
         throw error;
       });
+
+    if (!isCorrect) {
+      await prisma.inspectionReport.create({ data: { inspectionId: inspection.id, note } });
+    }
 
     const descriptions = new Map(
       (
@@ -83,6 +124,7 @@ inspectionRoutes.post("/", authenticate, authorize("ISPETTORE"), async (req, res
       plate: vehicle.plate,
       verdict: isCorrect ? "CONFORME" : "NON_CONFORME",
       discrepancies: discrepancies.map((d) => ({ ...d, description: descriptions.get(d.itemId) })),
+      note,
       recordId: chain.recordId,
       hash,
       txHash: chain.txHash,

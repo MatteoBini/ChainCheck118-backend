@@ -7,6 +7,9 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().default("8h"),
+  CHAIN_RPC_URL: z.string().min(1),
+  CHAIN_PRIVATE_KEY: z.string().min(1),
+  CHAIN_CONTRACT_ADDRESS: z.string().min(1),
 });
 
 const parsed = envSchema.safeParse(process.env);

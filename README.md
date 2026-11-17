@@ -6,6 +6,7 @@ Certificazione tramite blockchain delle checklist di mezzi di soccorso
 docker compose up --build -d
 docker compose exec api npx prisma migrate deploy
 docker compose exec api npm run seed
+docker compose exec chain npx hardhat run scripts/deploy.ts --network localhost
 curl localhost:3000/health
 
 # API login

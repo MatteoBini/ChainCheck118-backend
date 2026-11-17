@@ -70,7 +70,7 @@ export async function assertAllPresent(results: ItemResult[]): Promise<void> {
   });
 }
 
-function startOfToday(): Date {
+export function startOfToday(): Date {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return today;

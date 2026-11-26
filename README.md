@@ -1,6 +1,6 @@
 # ChainCheck118-backend
 Certificazione tramite blockchain delle checklist di mezzi di soccorso
-
+Progetto del corso di Tecnologie Internet (unipr - ing IET)
 
 # First Time
 docker compose up --build -d

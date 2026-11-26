@@ -1,71 +1,77 @@
-name: chaincheck118
+# Backend ChainCheck118 con immagini di PRODUZIONE (nessun sorgente montato).
+# Per sviluppare usa docker-compose.dev.yml.
+#
+#   docker compose up --build -d                      # API → http://localhost:3000
+#   docker compose run --rm migrate npm run seed      # utenti e mezzi di prova (facoltativo)
+#
+# Variabili (da .env): JWT_SECRET (obbligatoria), PORT, CHAIN_PORT, LOG_LEVEL, POSTGRES_*, JWT_EXPIRES_IN.
+
+name: chaincheck118-backend
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: chaincheck118-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-chaincheck}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chaincheck}
       POSTGRES_DB: ${POSTGRES_DB:-chaincheck118}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chaincheck} -d ${POSTGRES_DB:-chaincheck118}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   chain:
     build:
-      context: ./contracts
-      dockerfile: Dockerfile.dev
-    container_name: chaincheck118-chain
+      context: .
+      dockerfile: docker/chain/Dockerfile
+      target: runtime
     restart: unless-stopped
+    init: true
     ports:
-      - "8545:8545"
-    volumes:
-      - ./contracts:/app
-      - contracts_node_modules:/app/node_modules
+      - "${CHAIN_PORT:-8545}:8545"
+
+  # Applica le migrazioni e termina (lo stage `build` contiene la CLI di Prisma).
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+      target: build
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: &database-url postgresql://${POSTGRES_USER:-chaincheck}:${POSTGRES_PASSWORD:-chaincheck}@postgres:5432/${POSTGRES_DB:-chaincheck118}?schema=public
+      SEED_PASSWORD: ${SEED_PASSWORD:-password123}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   api:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: dev
-    container_name: chaincheck118-api
+      dockerfile: docker/api/Dockerfile
+      target: runtime
     restart: unless-stopped
+    init: true
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       chain:
-        condition: service_started
+        condition: service_healthy
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-      CHOKIDAR_USEPOLLING: "true"
-      CHOKIDAR_INTERVAL: "500"
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-non-usare-in-produzione-32+}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      JWT_SECRET: ${JWT_SECRET:?imposta JWT_SECRET nel file .env}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
-      SEED_PASSWORD: ${SEED_PASSWORD:-password123}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-chaincheck}:${POSTGRES_PASSWORD:-chaincheck}@postgres:5432/${POSTGRES_DB:-chaincheck118}?schema=public
-      CHAIN_RPC_URL: ${CHAIN_RPC_URL:-http://chain:8545}
-      CHAIN_PRIVATE_KEY: ${CHAIN_PRIVATE_KEY:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80}
-      CHAIN_CONTRACT_ADDRESS: ${CHAIN_CONTRACT_ADDRESS:-0x5FbDB2315678afecb367f032d93F642f64180aa3}
+      DATABASE_URL: *database-url
+      CHAIN_RPC_URL: http://chain:8545
+      CHAIN_PRIVATE_KEY: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+      CHAIN_CONTRACT_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
     ports:
       - "${PORT:-3000}:3000"
-    volumes:
-      - ./src:/app/src
-      - ./prisma:/app/prisma
-      - ./package.json:/app/package.json
-      - ./tsconfig.json:/app/tsconfig.json
-      - node_modules:/app/node_modules
 
 volumes:
   postgres_data:
-  node_modules:
-  contracts_node_modules:

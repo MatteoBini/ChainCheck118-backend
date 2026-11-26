@@ -1,0 +1,10 @@
+# Context = root del repo, ma servono solo contracts/ e docker/chain/.
+*
+!contracts
+!docker/chain
+contracts/node_modules
+contracts/artifacts
+contracts/cache
+contracts/typechain-types
+contracts/coverage
+**/*.log

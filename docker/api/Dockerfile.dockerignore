@@ -6,11 +6,15 @@ coverage
 .husky
 .vscode
 .history
+.claude
 contracts
 tests
 docs
 src/logs
+src/generated
 .env
-.env.dev
+.env.*
+!.env.example
 *.log
 info.txt
+docker-compose*.yml

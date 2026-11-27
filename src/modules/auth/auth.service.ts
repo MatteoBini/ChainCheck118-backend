@@ -20,7 +20,12 @@ export async function signToken(user: TokenUser): Promise<string> {
     .sign(secret);
 }
 
-export async function verifyToken(token: string): Promise<TokenUser> {
+export interface VerifiedToken {
+  user: TokenUser;
+  expiresAt: Date;
+}
+
+async function verify(token: string) {
   const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] });
 
   const id = Number(payload.sub);
@@ -31,5 +36,20 @@ export async function verifyToken(token: string): Promise<TokenUser> {
     throw new Error("Payload del token non valido");
   }
 
-  return { id, username, role: role as Role };
+  const user: TokenUser = { id, username, role: role as Role };
+  return { user, exp: payload.exp };
+}
+
+export async function verifyToken(token: string): Promise<TokenUser> {
+  return (await verify(token)).user;
+}
+
+// Come verifyToken, ma restituisce anche la scadenza (serve al realtime per chiudere
+// il socket quando il token scade). Un token senza `exp` viene rifiutato.
+export async function verifyTokenWithExpiry(token: string): Promise<VerifiedToken> {
+  const { user, exp } = await verify(token);
+  if (typeof exp !== "number") {
+    throw new Error("Token senza scadenza");
+  }
+  return { user, expiresAt: new Date(exp * 1000) };
 }

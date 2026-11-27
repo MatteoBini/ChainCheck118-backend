@@ -10,6 +10,8 @@ const envSchema = z.object({
   CHAIN_RPC_URL: z.string().min(1),
   CHAIN_PRIVATE_KEY: z.string().min(1),
   CHAIN_CONTRACT_ADDRESS: z.string().min(1),
+  // Dopo quanti ms senza update la posizione di un utente viene tolta dalla mappa.
+  PRESENCE_STALE_MS: z.coerce.number().int().positive().default(10000),
 });
 
 const parsed = envSchema.safeParse(process.env);

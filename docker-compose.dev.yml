@@ -9,7 +9,8 @@
 # - Debugger Node su localhost:9229 (VS Code: "Attach to API (Docker)").
 # - Se cambia package-lock.json basta riavviare il servizio: le dipendenze si riallineano da sole.
 #
-# Variabili (facoltative, da .env): PORT, CHAIN_PORT, LOG_LEVEL, POSTGRES_*, JWT_*, SEED_PASSWORD.
+# Variabili (facoltative, da .env): PORT, CHAIN_PORT, LOG_LEVEL, POSTGRES_*, JWT_*, SEED_PASSWORD,
+# PRESENCE_STALE_MS.
 
 name: chaincheck118-backend-dev
 
@@ -68,6 +69,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-secret-non-usare-in-produzione-32+}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
       SEED_PASSWORD: ${SEED_PASSWORD:-password123}
+      PRESENCE_STALE_MS: ${PRESENCE_STALE_MS:-10000}
       # Indirizzi interni alla rete Docker: non presi dal .env (che punta a localhost).
       DATABASE_URL: postgresql://${POSTGRES_USER:-chaincheck}:${POSTGRES_PASSWORD:-chaincheck}@postgres:5432/${POSTGRES_DB:-chaincheck118}?schema=public
       CHAIN_RPC_URL: http://chain:8545

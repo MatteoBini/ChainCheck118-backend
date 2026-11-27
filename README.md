@@ -33,6 +33,10 @@ docker compose up --build -d                    # richiede JWT_SECRET nel .env
 docker compose run --rm migrate npm run seed    # facoltativo
 ```
 
+# Realtime
+Mappa in tempo reale con posizioni simulate (Socket.IO su `/socket.io`): contratto, regole e limiti
+in [docs/architecture.md](docs/architecture.md). Test: `npm test` e `npm run test:integration`.
+
 # API login
 curl -s -X POST localhost:3000/auth/login \
   -H 'Content-Type: application/json' \

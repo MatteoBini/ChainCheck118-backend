@@ -7,6 +7,7 @@ import { checklistRoutes } from "./modules/checklists/checklists.routes.js";
 import { inspectionRoutes } from "./modules/inspections/inspections.routes.js";
 import { recentRoutes } from "./modules/recents/recents.routes.js";
 import { reportRoutes } from "./modules/reports/reports.routes.js";
+import { userRoutes } from "./modules/users/users.routes.js";
 import { vehicleRoutes } from "./modules/vehicles/vehicles.routes.js";
 
 export const routes = Router();
@@ -23,6 +24,7 @@ routes.get("/health", async (_req, res) => {
 
 routes.use("/auth", authRoutes);
 routes.use("/vehicles", vehicleRoutes);
+routes.use("/users", userRoutes);
 routes.use("/checklists", checklistRoutes);
 routes.use("/inspections", inspectionRoutes);
 routes.use("/recents", recentRoutes);

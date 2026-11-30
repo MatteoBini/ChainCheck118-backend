@@ -77,7 +77,10 @@ const defaultLoadUser: LoadUser = (id) =>
 
 export function attachRealtime(
   httpServer: HttpServer,
-  { loadUser = defaultLoadUser }: { loadUser?: LoadUser } = {},
+  {
+    loadUser = defaultLoadUser,
+    staleMs = env.PRESENCE_STALE_MS,
+  }: { loadUser?: LoadUser; staleMs?: number } = {},
 ): Server<ClientToServer, ServerToClient, Record<string, never>, SocketData> {
   const log = logger.child({ module: "realtime" });
   const io = new Server<ClientToServer, ServerToClient, Record<string, never>, SocketData>(httpServer, {
@@ -233,7 +236,7 @@ export function attachRealtime(
   });
 
   const sweep = setInterval(() => {
-    const limit = Date.now() - env.PRESENCE_STALE_MS;
+    const limit = Date.now() - staleMs;
     for (const [userId, entry] of presences) {
       if (entry.seenAt < limit) {
         removePresence(userId, "STALE");
